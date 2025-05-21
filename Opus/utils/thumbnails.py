@@ -16,18 +16,19 @@ def changeImageSize(maxWidth, maxHeight, image):
     newImage = image.resize((newWidth, newHeight))
     return newImage
 
-def truncate(text, max_length=27):
-    if len(text) > max_length:
-        return text[: max_length - 1] + "…"
-    return text
+def truncate(text):
+    list = text.split(" ")
+    text1 = ""
+    text2 = ""    
+    for i in list:
+        if len(text1) + len(i) < 30:        
+            text1 += " " + i
+        elif len(text2) + len(i) < 30:       
+            text2 += " " + i
 
-def truncate_channel(text, max_length=18):
-    if len(text) > max_length:
-        return text[: max_length - 1] + "…"
-    return text
-
-
-
+    text1 = text1.strip()
+    text2 = text2.strip()     
+    return [text1,text2]
 
 def crop_center_circle(img, output_size, border, crop_scale=1.5):
     half_the_width = img.size[0] / 2
@@ -62,33 +63,6 @@ def crop_center_circle(img, output_size, border, crop_scale=1.5):
     result = Image.composite(final_img, Image.new("RGBA", final_img.size, (0, 0, 0, 0)), mask_border)
     
     return result
-
-
-def crop_center_square(img, output_size, crop_scale=1.0):
-    half_the_width = img.size[0] / 2
-    half_the_height = img.size[1] / 2
-    larger_size = int(output_size * crop_scale)
-
-    # Square crop
-    img = img.crop((
-        half_the_width - larger_size / 2,
-        half_the_height - larger_size / 2,
-        half_the_width + larger_size / 2,
-        half_the_height + larger_size / 2
-    ))
-
-    img = img.resize((output_size, output_size))
-
-    # Create a mask with rounded corners
-    mask = Image.new("L", (output_size, output_size), 0)
-    draw = ImageDraw.Draw(mask)
-    draw.rounded_rectangle((0, 0, output_size, output_size), radius=10, fill=255)
-
-    # Apply the mask
-    rounded_square = Image.new("RGBA", (output_size, output_size), (0, 0, 0, 0))
-    rounded_square.paste(img, (0, 0), mask)
-
-    return rounded_square
 
 
 
@@ -133,44 +107,51 @@ async def get_thumb(videoid):
     enhancer = ImageEnhance.Brightness(background)
     background = enhancer.enhance(0.6)
     draw = ImageDraw.Draw(background)
+    arial = ImageFont.truetype("Opus/assets/font2.ttf", 30)
+    font = ImageFont.truetype("Opus/assets/font.ttf", 30)
+    title_font = ImageFont.truetype("Opus/assets/font3.ttf", 45)
 
-    title_font = ImageFont.truetype("src/assets/semibold.ttf", 28)
-    channel_name_font = ImageFont.truetype("src/assets/semibold.ttf", 20)
-    duration_font = ImageFont.truetype("src/assets/semibold.ttf", 18)
 
+    circle_thumbnail = crop_center_circle(youtube, 400, 20)
+    circle_thumbnail = circle_thumbnail.resize((400, 400))
+    circle_position = (120, 160)
+    background.paste(circle_thumbnail, circle_position, circle_thumbnail)
 
-    # Load your image
-    my_image = Image.open("src/assets/bg.png").convert("RGBA")
+    text_x_position = 565
 
-    # Resize if needed
-    my_image = my_image.resize((1280, 720))
-
-    # Calculate center position
-    bg_width, bg_height = background.size
-    img_width, img_height = my_image.size
-    center_x = (bg_width - img_width) // 2
-    center_y = (bg_height - img_height) // 2
-
-    # Paste image at center
-    background.paste(my_image, (center_x, center_y), my_image)
-
-    square_thumbnail = crop_center_square(youtube, 200)
-    square_thumbnail = square_thumbnail.resize((190, 190))
-    square_position = (302, 188)
-    background.paste(square_thumbnail, square_position, square_thumbnail)
-
-    # Video Title
-
-    text_x_position = 520
-
-    draw.text((text_x_position, 240), truncate(title), font=title_font, fill="white")
-    draw.text((text_x_position, 290), truncate_channel(channel), (255, 255, 255), font=channel_name_font)
+    title1 = truncate(title)
+    draw.text((text_x_position, 180), title1[0], fill=(255, 255, 255), font=title_font)
+    draw.text((text_x_position, 230), title1[1], fill=(255, 255, 255), font=title_font)
+    draw.text((text_x_position, 320), f"{channel}  |  {views[:23]}", (255, 255, 255), font=arial)
 
     
-    draw.text((930, 440), f"-{duration}", (174, 174, 174), font=duration_font)
+    line_length = 580  
 
-    background = background.convert("RGB")
+    
+    red_length = int(line_length * 0.6)
+    white_length = line_length - red_length
 
+    
+    start_point_red = (text_x_position, 380)
+    end_point_red = (text_x_position + red_length, 380)
+    draw.line([start_point_red, end_point_red], fill="red", width=9)
+
+    
+    start_point_white = (text_x_position + red_length, 380)
+    end_point_white = (text_x_position + line_length, 380)
+    draw.line([start_point_white, end_point_white], fill="white", width=8)
+
+    
+    circle_radius = 10 
+    circle_position = (end_point_red[0], end_point_red[1])
+    draw.ellipse([circle_position[0] - circle_radius, circle_position[1] - circle_radius,
+                  circle_position[0] + circle_radius, circle_position[1] + circle_radius], fill="red")
+    draw.text((text_x_position, 400), "00:00", (255, 255, 255), font=arial)
+    draw.text((1080, 400), duration, (255, 255, 255), font=arial)
+
+    play_icons = Image.open("src/assets/play_icons.png")
+    play_icons = play_icons.resize((580, 62))
+    background.paste(play_icons, (text_x_position, 450), play_icons)
 
     try:
         os.remove(f"cache/thumb{videoid}.png")
