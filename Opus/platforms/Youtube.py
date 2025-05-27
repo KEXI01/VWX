@@ -17,7 +17,7 @@ import logging
 import aiohttp
 import config
 
-API_URL = "https://api.thequickearn.xyz", 
+API_URL = "https://api.thequickearn.xyz"
 API_KEY =  "NxGBNexGenBots26f6e9"
 
 def cookie_txt_file():
