@@ -8,8 +8,8 @@ import yt_dlp
 from pyrogram.enums import MessageEntityType
 from pyrogram.types import Message
 from youtubesearchpython.__future__ import VideosSearch
-from Opus.utils.database import is_on_off
-from Opus.utils.formatters import time_to_seconds
+from TanuMusic.utils.database import is_on_off
+from TanuMusic.utils.formatters import time_to_seconds
 import os
 import glob
 import random
@@ -17,8 +17,11 @@ import logging
 import aiohttp
 import config
 
+#from config import API_URL, API_KEY
+
 API_URL = "https://api.thequickearn.xyz"
 API_KEY =  "NxGBNexGenBots26f6e9"
+
 
 def cookie_txt_file():
     cookie_dir = f"{os.getcwd()}/cookies"
